@@ -1,12 +1,12 @@
 package repository
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 type User struct {
-	Id int
+	Id   int
 	Name string
 }
 
@@ -29,8 +29,8 @@ func (m *manager) fallbackUserName(id int) (string, error) {
 		return "", fmt.Errorf("m.fallback.UserName(%v):%w%v", id, NotFoundError, err)
 	}
 
-	if e := m.fallback.IsRateLimitError(err); e != nil {
-		return "", fmt.Errorf("m.fallback.UserName(%v):%w%v", id, newRateLimitError(e.RetryIn()), err)
+	if retryIn, e := m.fallback.IsRateLimitError(err); e == nil {
+		return "", fmt.Errorf("m.fallback.UserName(%v):%w%v", id, newRateLimitError(retryIn), err)
 	}
 
 	if err != nil {
@@ -59,11 +59,11 @@ func (m *manager) IsInternalServerError(err error) bool {
 	return errors.Is(err, InternalServerError)
 }
 
-func (m *manager) IsRateLimitError(err error) *RateLimitError {
+func (m *manager) IsRateLimitError(err error) (int, error) {
 	var e *RateLimitError
 	if errors.As(err, &e) {
-		return e
+		return e.retryIn, nil
 	}
 
-	return nil
+	return 0, err
 }

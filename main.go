@@ -24,10 +24,10 @@ func main() {
 			fmt.Println("Increment StatsD for PagerDuty")
 		}
 
-		if e := user.IsRateLimitError(err); e != nil {
+		if retryIn, e := user.IsRateLimitError(err); e == nil {
 			fmt.Println(fmt.Errorf("user.Name(): %v", err))
-			fmt.Printf("Retry in %v seconds\n", e.RetryIn())
+			fmt.Printf("Retry in %v seconds\n", retryIn)
 		}
-		fmt.Println("CASE ===========\n")
+		fmt.Println("CASE ===========")
 	}
 }

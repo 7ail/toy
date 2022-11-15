@@ -1,12 +1,12 @@
 package zendesk
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 type User struct {
-	Id int
+	Id   int
 	Name string
 }
 
@@ -39,11 +39,11 @@ func (m *messenger) IsInternalServerError(err error) bool {
 	return errors.Is(err, InternalServerError)
 }
 
-func (m *messenger) IsRateLimitError(err error) *RateLimitError {
+func (m *messenger) IsRateLimitError(err error) (int, error) {
 	var e *RateLimitError
 	if errors.As(err, &e) {
-		return e
+		return e.retryIn, nil
 	}
 
-	return nil
+	return 0, err
 }

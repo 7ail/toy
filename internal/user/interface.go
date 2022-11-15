@@ -1,12 +1,8 @@
 package user
 
-import (
-	"github.com/7ail/toy/internal/repository"
-)
-
 type source interface {
 	IsNotFoundError(err error) (exist bool)
-	IsRateLimitError(err error) *repository.RateLimitError
+	IsRateLimitError(error) (retryIn int, err error)
 
 	UserName(id int) (name string, err error)
 }

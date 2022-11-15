@@ -1,30 +1,30 @@
 package user
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
 )
 
 type User struct {
-	id int
+	id         int
 	repository source
 }
 
 func New(id int, r source) User {
 	return User{
-		id: id,
+		id:         id,
 		repository: r,
 	}
 }
 
-func(u *User) Name() (string, error) {
+func (u *User) Name() (string, error) {
 	name, err := u.repository.UserName(u.id)
 	if u.repository.IsNotFoundError(err) {
 		return "", fmt.Errorf("u.repository.UserName(%v):%w%v", u.id, NotFoundError, err)
 	}
 
-	if e := u.repository.IsRateLimitError(err); e != nil {
-		return "", fmt.Errorf("m.repository.UserName(%v):%w%v", u.id, newRateLimitError(e.RetryIn()), err)
+	if retryIn, e := u.repository.IsRateLimitError(err); e == nil {
+		return "", fmt.Errorf("m.repository.UserName(%v):%w%v", u.id, newRateLimitError(retryIn), err)
 	}
 
 	if err != nil {
@@ -42,11 +42,11 @@ func (u *User) IsInternalServerError(err error) bool {
 	return errors.Is(err, InternalServerError)
 }
 
-func (u *User) IsRateLimitError(err error) *RateLimitError {
+func (u *User) IsRateLimitError(err error) (int, error) {
 	var e *RateLimitError
 	if errors.As(err, &e) {
-		return e
+		return e.retryIn, nil
 	}
 
-	return nil
+	return 0, err
 }
